@@ -64,10 +64,10 @@ def send_welcome(message):
 
 
 # Обработчик команды /fact-check
-@bot.message_handler(commands=["fact-check"])
+@bot.message_handler(commands=["fact_check"])
 def handle_fact_check(message):
     """
-    Обрабатывает команду /fact-check.
+    Обрабатывает команду /fact_check.
     """
     # Запрашиваем у пользователя текст для проверки
     msg = bot.reply_to(message, "Отправьте текст или факт для проверки:")
