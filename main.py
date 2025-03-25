@@ -35,7 +35,7 @@ conn.commit()
 
 
 def create_nav_buttons():
-    """Создает inline-кнопки навигации только для последнего сообщения"""
+    """Создает inline-кнопки навигации"""
     markup = types.InlineKeyboardMarkup()
     btn1 = types.InlineKeyboardButton("🔍 Проверить факт", callback_data="fact_check")
     btn2 = types.InlineKeyboardButton("📜 История запросов", callback_data="history")
@@ -112,16 +112,9 @@ def send_welcome(message):
 Привет! Я бот для проверки фактов. 
 
 Выберите действие:
-    """
-    # Отправляем сообщение без кнопок
-    bot.send_message(message.chat.id, welcome_text)
-
-    # Отправляем отдельное сообщение с кнопками навигации
-    bot.send_message(
-        message.chat.id,
-        "Используйте кнопки ниже для навигации:",
-        reply_markup=create_nav_buttons()
-    )
+"""
+    # Отправляем сообщение с кнопками
+    bot.send_message(message.chat.id, welcome_text, reply_markup=create_nav_buttons())
 
 
 # Обработчик inline-кнопок
@@ -130,22 +123,24 @@ def handle_inline_buttons(call):
     """Обрабатывает нажатия inline-кнопок"""
     try:
         if call.data == "fact_check":
-            # Удаляем предыдущие кнопки
-            try:
-                bot.delete_message(call.message.chat.id, call.message.message_id)
-            except:
-                pass
-
+            # Редактируем сообщение с кнопками, убирая их
+            bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=call.message.text,
+                reply_markup=None
+            )
             msg = bot.send_message(call.message.chat.id, "Отправьте текст или факт для проверки:")
             bot.register_next_step_handler(msg, process_fact_check)
 
         elif call.data == "history":
-            # Удаляем предыдущие кнопки
-            try:
-                bot.delete_message(call.message.chat.id, call.message.message_id)
-            except:
-                pass
-
+            # Редактируем сообщение с кнопками, убирая их
+            bot.edit_message_text(
+                chat_id=call.message.chat.id,
+                message_id=call.message.message_id,
+                text=call.message.text,
+                reply_markup=None
+            )
             show_history(call.message)
 
         bot.answer_callback_query(call.id)
@@ -161,6 +156,7 @@ def show_history(message):
     history = get_user_history(user.id)
 
     if not history:
+        # Отправляем сообщение с кнопками
         bot.send_message(
             message.chat.id,
             "У вас пока нет истории запросов.",
@@ -174,7 +170,7 @@ def show_history(message):
         response += f"❓ {request[:50]}{'...' if len(request) > 50 else ''}\n"
         response += f"📌 Ответ: {response_text[:50]}{'...' if len(response_text) > 50 else ''}\n\n"
 
-    # Отправляем историю и кнопки одним сообщением
+    # Отправляем историю с кнопками
     bot.send_message(
         message.chat.id,
         response,
@@ -220,22 +216,18 @@ def process_fact_check(message):
         # Удаляем сообщение о обработке
         bot.delete_message(message.chat.id, processing_msg.message_id)
 
-        # Отправляем ответ
-        bot.send_message(message.chat.id, fact_check_response)
-
-        # Отправляем кнопки навигации отдельным сообщением
+        # Отправляем ответ с кнопками
         bot.send_message(
             message.chat.id,
-            "Выберите следующее действие:",
+            fact_check_response,
             reply_markup=create_nav_buttons()
         )
 
     except Exception as e:
-        bot.send_message(message.chat.id, f"Произошла ошибка: {str(e)}")
-        # Все равно показываем кнопки после ошибки
+        # Отправляем сообщение об ошибке с кнопками
         bot.send_message(
             message.chat.id,
-            "Попробуйте еще раз:"   ,
+            f"Произошла ошибка: {str(e)}",
             reply_markup=create_nav_buttons()
         )
 
